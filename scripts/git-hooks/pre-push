@@ -1,0 +1,52 @@
+#!/bin/bash
+
+# 获取要推送的分支名称
+branch_name=$(git rev-parse --abbrev-ref HEAD)
+
+if [ "$branch_name" == "master" ]; then
+    exit 0
+fi
+
+# 函数：检查分支名称是否符合规则
+check_branch_name() {
+    local branch_name="$1"
+
+    # 检查分支名称是否为 name-main、name-dev、name-uat 的格式
+    if [[ "$branch_name" =~ ^[a-zA-Z0-9]+-(main|dev|uat)$ ]]; then
+        return 1
+    fi
+
+    # 检查分支名称是否以 feature/name/、fix/name/ 或 hotfix/name/ 开头
+    if [[ "$branch_name" =~ ^(feature|fix|hotfix)/[^/]+/[^/]+$ ]]; then
+        return 2
+    fi
+
+    return 0
+}
+
+# 定义允许的 name 列表
+allowed_names=("common" "singam" "99lotto" "bhau" "06")
+
+# 0 直接拦截 1 是主分支 2 是特性分支
+$(check_branch_name "$branch_name")
+branch_type=$?
+
+project_name=
+if [ "$branch_type" == "0" ]; then
+    echo "分支名称'$branch_name'不规范"
+    exit 1
+elif [ "$branch_type" == "1" ]; then
+    project_name=$(echo "$branch_name" | sed 's/-.*//')
+elif [ "$branch_type" == "2" ]; then
+    project_name=$(echo "$branch_name" | sed 's/.*\/\([^/]*\)\/.*/\1/')
+fi
+
+# 检查 project_name 是否在 allowed_names 中
+if [[ ! " ${allowed_names[@]} " =~ " $project_name " ]]; then
+    echo 中间名'$project_name'不合法
+    echo 合法的中间名
+    printf '%s\n' "${allowed_names[@]}"
+    exit 1
+fi
+
+exit 0

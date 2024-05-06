@@ -1,0 +1,23 @@
+#!/bin/bash
+
+changed_files=$(git diff --cached --name-only)
+
+contains_console_log=false
+contains_debugger=false
+
+for file in $changed_files; do
+    if grep -q "console\.log" "$file"; then
+        contains_console_log=true
+    fi
+
+    if grep -q "debugger" "$file"; then
+        contains_debugger=true
+    fi
+done
+
+if [ "$contains_console_log" = true ] || [ "$contains_debugger" = true ]; then
+    echo "Error: Your commit contains 'console.log' or 'debugger'. Please remove them before committing."
+    exit 1
+fi
+
+exit 0
